@@ -1,0 +1,1081 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>出游开支费用记账单</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #647084;
+      --line: #d9e0ea;
+      --primary: #1967d2;
+      --primary-dark: #124c9d;
+      --green: #0f8b5f;
+      --amber: #a16207;
+      --red: #c2410c;
+      --shadow: 0 12px 30px rgba(30, 42, 65, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", Arial, sans-serif;
+      line-height: 1.5;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(24px, 3vw, 34px);
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      min-height: 38px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      box-shadow: 0 1px 2px rgba(30, 42, 65, 0.04);
+    }
+
+    .btn:hover {
+      border-color: #b9c4d3;
+      background: #f9fbfe;
+    }
+
+    .btn.primary {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn.primary:hover {
+      border-color: var(--primary-dark);
+      background: var(--primary-dark);
+    }
+
+    .btn.danger {
+      color: #b42318;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel h2 {
+      margin: 0;
+      padding: 16px 18px 0;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    form {
+      padding: 16px 18px 18px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--ink);
+      min-height: 40px;
+      padding: 8px 10px;
+      outline: none;
+      font-weight: 500;
+    }
+
+    textarea {
+      min-height: 78px;
+      resize: vertical;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(25, 103, 210, 0.12);
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .hint {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      padding: 16px 18px 0;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcff;
+      min-width: 0;
+    }
+
+    .metric .label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .metric .value {
+      margin-top: 4px;
+      font-size: 22px;
+      font-weight: 800;
+      word-break: break-word;
+    }
+
+    .metric.total {
+      background: #eef5ff;
+      border-color: #bfd6ff;
+    }
+
+    .metric.total .value {
+      color: var(--primary-dark);
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr 1fr 1fr;
+      gap: 10px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .table-wrap {
+      overflow: auto;
+      max-height: 68vh;
+    }
+
+    table {
+      width: 100%;
+      min-width: 1500px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #f3f6fb;
+      color: #334155;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    tbody tr:hover {
+      background: #f9fbff;
+    }
+
+    .amount {
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #eef2f7;
+      color: #334155;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .tag.food {
+      background: #e8f5ee;
+      color: var(--green);
+    }
+
+    .tag.hotel {
+      background: #eef5ff;
+      color: var(--primary-dark);
+    }
+
+    .tag.fuel {
+      background: #fff7ed;
+      color: var(--red);
+    }
+
+    .tag.shopping {
+      background: #f5efff;
+      color: #6d28d9;
+    }
+
+    .tag.ticket {
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+
+    .tag.cablecar {
+      background: #ecfccb;
+      color: #4d7c0f;
+    }
+
+    .tag.guide {
+      background: #ffe4e6;
+      color: #be123c;
+    }
+
+    .tag.shuttle {
+      background: #ede9fe;
+      color: #5b21b6;
+    }
+
+    .tag.tip {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .tag.toll {
+      background: #fef9c3;
+      color: var(--amber);
+    }
+
+    .row-actions {
+      display: flex;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .icon-btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 6px;
+      padding: 5px 8px;
+      color: var(--ink);
+      font-size: 12px;
+    }
+
+    .empty {
+      padding: 28px 18px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .stats-table {
+      min-width: 640px;
+    }
+
+    .stats-wrap {
+      padding: 0 18px 18px;
+      overflow: auto;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    /* 新增：金额输入框聚焦提示 */
+    #amount:focus::placeholder {
+      color: var(--primary);
+      opacity: 0.8;
+    }
+
+    /* 优化移动端滚动体验 */
+    @media (max-width: 980px) {
+      .app {
+        padding: 16px;
+      }
+
+      header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .toolbar {
+        justify-content: flex-start;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .filters {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      /* 移动端表格优化 */
+      .table-wrap {
+        max-height: 50vh;
+        -webkit-overflow-scrolling: touch;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .form-grid,
+      .summary,
+      .filters {
+        grid-template-columns: 1fr;
+      }
+
+      .form-actions,
+      .toolbar {
+        width: 100%;
+      }
+
+      .btn {
+        flex: 1 1 auto;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .app {
+        max-width: none;
+        padding: 0;
+      }
+
+      .toolbar,
+      .left-panel,
+      .filters,
+      .row-actions {
+        display: none;
+      }
+
+      .grid {
+        display: block;
+      }
+
+      .panel {
+        box-shadow: none;
+        border: 0;
+      }
+
+      .table-wrap {
+        max-height: none;
+      }
+
+      th {
+        position: static;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <h1>出游开支费用记账单</h1>
+        <p class="subtitle">本网页会自动保存到当前浏览器。可随时新增、编辑、筛选、统计、导出和打印。</p>
+      </div>
+      <div class="toolbar" aria-label="工具栏">
+        <button class="btn" id="exportCsvBtn" type="button">导出 CSV</button>
+        <button class="btn" id="exportJsonBtn" type="button">备份 JSON</button>
+        <button class="btn" id="importBtn" type="button">导入 JSON</button>
+        <button class="btn" id="printBtn" type="button">打印</button>
+        <button class="btn danger" id="clearBtn" type="button">清空</button>
+        <input class="file-input" id="importFile" type="file" accept="application/json,.json" />
+      </div>
+    </header>
+
+    <section class="grid">
+      <section class="panel left-panel">
+        <h2 id="formTitle">新增开支</h2>
+        <form id="expenseForm">
+          <input id="editingId" type="hidden" />
+          <div class="form-grid">
+            <label>
+              日期
+              <input id="date" type="date" required />
+            </label>
+            <label>
+              分类
+              <select id="category" required>
+                <option value="餐饮">餐饮</option>
+                <option value="住宿">住宿</option>
+                <option value="加油">加油</option>
+                <option value="购物">购物</option>
+                <option value="门票">门票</option>
+                <option value="缆车">缆车</option>
+                <option value="导游费">导游费</option>
+                <option value="景区内车费">景区内车费</option>
+                <option value="小费">小费</option>
+                <option value="过路费">过路费</option>
+                <option value="其他消费">其他消费</option>
+              </select>
+            </label>
+            <label>
+              消费金额
+              <input id="amount" type="number" min="0.01" step="0.01" placeholder="请输入大于0的金额，保留两位小数" required />
+            </label>
+            <label>
+              支付方式
+              <select id="payment">
+                <option value="微信">微信</option>
+                <option value="支付宝">支付宝</option>
+                <option value="银行卡">银行卡</option>
+                <option value="现金">现金</option>
+                <option value="其他">其他</option>
+              </select>
+            </label>
+            <label class="full">
+              开支事由
+              <input id="reason" type="text" placeholder="例如：午餐、高速通行、酒店入住、购买日用品" />
+            </label>
+            <label>
+              过路费起点
+              <input id="from" type="text" placeholder="从哪（仅过路费必填）" />
+            </label>
+            <label>
+              过路费终点
+              <input id="to" type="text" placeholder="到哪（仅过路费必填）" />
+            </label>
+            <label>
+              大约里程数（公里）
+              <input id="mileage" type="number" min="0" step="0.1" placeholder="例如：128（仅过路费填写）" />
+            </label>
+            <label>
+              票据编号/订单号
+              <input id="receipt" type="text" placeholder="可选" />
+            </label>
+            <label class="full">
+              备注
+              <textarea id="note" placeholder="同行人、发票情况、报销说明等"></textarea>
+            </label>
+          </div>
+          <div class="form-actions">
+            <button class="btn primary" type="submit" id="saveBtn">保存记录</button>
+            <button class="btn" type="button" id="resetBtn">重置</button>
+          </div>
+          <div class="hint">提示：选择“过路费”时，建议填写起点、终点和大约里程数，统计区会单独汇总过路里程。</div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2>分类统计</h2>
+        <div class="summary" id="summaryCards"></div>
+        <div class="stats-wrap">
+          <table class="stats-table" aria-label="分类统计表">
+            <thead>
+              <tr>
+                <th>分类</th>
+                <th class="amount">笔数</th>
+                <th class="amount">金额合计</th>
+                <th class="amount">占比</th>
+              </tr>
+            </thead>
+            <tbody id="statsBody"></tbody>
+          </table>
+        </div>
+
+        <div class="filters" aria-label="筛选条件">
+          <label>
+            关键词
+            <input id="search" type="search" placeholder="搜索事由、路线、备注" />
+          </label>
+          <label>
+            分类筛选
+            <select id="filterCategory">
+              <option value="全部">全部</option>
+              <option value="餐饮">餐饮</option>
+              <option value="住宿">住宿</option>
+              <option value="加油">加油</option>
+              <option value="购物">购物</option>
+              <option value="门票">门票</option>
+              <option value="缆车">缆车</option>
+              <option value="导游费">导游费</option>
+              <option value="景区内车费">景区内车费</option>
+              <option value="小费">小费</option>
+              <option value="过路费">过路费</option>
+              <option value="其他消费">其他消费</option>
+            </select>
+          </label>
+          <label>
+            开始日期
+            <input id="startDate" type="date" />
+          </label>
+          <label>
+            结束日期
+            <input id="endDate" type="date" />
+          </label>
+        </div>
+
+        <div class="table-wrap">
+          <table aria-label="开支明细表">
+            <thead>
+              <tr>
+                <th>日期</th>
+                <th>分类</th>
+                <th class="amount">消费金额</th>
+                <th>餐饮</th>
+                <th>住宿</th>
+                <th>加油</th>
+                <th>购物</th>
+                <th>门票</th>
+                <th>缆车</th>
+                <th>导游费</th>
+                <th>景区内车费</th>
+                <th>小费</th>
+                <th>过路费</th>
+                <th>开支事由</th>
+                <th>从哪</th>
+                <th>到哪</th>
+                <th class="amount">大约里程数</th>
+                <th>支付方式</th>
+                <th>票据/订单</th>
+                <th>备注</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="expenseBody"></tbody>
+          </table>
+          <div class="empty" id="emptyState">✨ 暂无开支记录，点击左侧表单添加第一笔记录吧！</div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "travel-expense-tracker-v1";
+    const categories = ["餐饮", "住宿", "加油", "购物", "门票", "缆车", "导游费", "景区内车费", "小费", "过路费", "其他消费"];
+    const categoryClass = {
+      "餐饮": "food",
+      "住宿": "hotel",
+      "加油": "fuel",
+      "购物": "shopping",
+      "门票": "ticket",
+      "缆车": "cablecar",
+      "导游费": "guide",
+      "景区内车费": "shuttle",
+      "小费": "tip",
+      "过路费": "toll",
+      "其他消费": "other"
+    };
+
+    const form = document.getElementById("expenseForm");
+    const formTitle = document.getElementById("formTitle");
+    const expenseBody = document.getElementById("expenseBody");
+    const statsBody = document.getElementById("statsBody");
+    const summaryCards = document.getElementById("summaryCards");
+    const emptyState = document.getElementById("emptyState");
+
+    const fields = {
+      editingId: document.getElementById("editingId"),
+      date: document.getElementById("date"),
+      category: document.getElementById("category"),
+      amount: document.getElementById("amount"),
+      payment: document.getElementById("payment"),
+      reason: document.getElementById("reason"),
+      from: document.getElementById("from"),
+      to: document.getElementById("to"),
+      mileage: document.getElementById("mileage"),
+      receipt: document.getElementById("receipt"),
+      note: document.getElementById("note")
+    };
+
+    const filters = {
+      search: document.getElementById("search"),
+      category: document.getElementById("filterCategory"),
+      startDate: document.getElementById("startDate"),
+      endDate: document.getElementById("endDate")
+    };
+
+    let expenses = loadExpenses();
+
+    function today() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function uid() {
+      return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+
+    function money(value) {
+      return Number(value || 0).toLocaleString("zh-CN", {
+        style: "currency",
+        currency: "CNY",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function numberText(value) {
+      const n = Number(value || 0);
+      return n ? n.toLocaleString("zh-CN", { maximumFractionDigits: 1 }) : "";
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function loadExpenses() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (error) {
+        alert("读取本地数据失败，将以空白账单打开。");
+        return [];
+      }
+    }
+
+    function saveExpenses() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
+    }
+
+    function resetForm() {
+      form.reset();
+      fields.editingId.value = "";
+      fields.date.value = today();
+      fields.category.value = "餐饮";
+      fields.payment.value = "微信";
+      formTitle.textContent = "新增开支";
+      document.getElementById("saveBtn").textContent = "保存记录";
+      // 重置过路费相关提示
+      fields.reason.placeholder = "例如：午餐、高速通行、酒店入住、购买日用品";
+    }
+
+    function getFilteredExpenses() {
+      const keyword = filters.search.value.trim().toLowerCase();
+      const category = filters.category.value;
+      const startDate = filters.startDate.value;
+      const endDate = filters.endDate.value;
+
+      return expenses
+        .filter((item) => {
+          if (category !== "全部" && item.category !== category) return false;
+          if (startDate && item.date < startDate) return false;
+          if (endDate && item.date > endDate) return false;
+          if (!keyword) return true;
+          const haystack = [
+            item.date,
+            item.category,
+            item.amount,
+            item.reason,
+            item.from,
+            item.to,
+            item.mileage,
+            item.payment,
+            item.receipt,
+            item.note
+          ].join(" ").toLowerCase();
+          return haystack.includes(keyword);
+        })
+        .sort((a, b) => `${b.date}-${b.createdAt}`.localeCompare(`${a.date}-${a.createdAt}`));
+    }
+
+    function summarize(list) {
+      const summary = Object.fromEntries(categories.map((category) => [
+        category,
+        { count: 0, total: 0 }
+      ]));
+      let total = 0;
+      let mileage = 0;
+
+      list.forEach((item) => {
+        const amount = Number(item.amount || 0);
+        const bucket = summary[item.category] || summary["其他消费"];
+        bucket.count += 1;
+        bucket.total += amount;
+        total += amount;
+        if (item.category === "过路费") {
+          mileage += Number(item.mileage || 0);
+        }
+      });
+
+      // 修复里程数精度问题
+      mileage = Math.round(mileage * 10) / 10;
+
+      return { summary, total, mileage, count: list.length };
+    }
+
+    function renderSummary(list) {
+      const { summary, total, mileage, count } = summarize(list);
+      const cardData = [
+        ["总开支", money(total), "total"],
+        ["记录笔数", `${count} 笔`, ""],
+        ["过路里程", `${numberText(mileage) || "0"} 公里`, ""],
+        ["日均开支", money(getDailyAverage(list, total)), ""]
+      ];
+
+      summaryCards.innerHTML = cardData.map(([label, value, className]) => `
+        <div class="metric ${className}">
+          <div class="label">${label}</div>
+          <div class="value">${value}</div>
+        </div>
+      `).join("");
+
+      statsBody.innerHTML = categories.map((category) => {
+        const row = summary[category];
+        const percent = total ? `${((row.total / total) * 100).toFixed(1)}%` : "0.0%";
+        return `
+          <tr>
+            <td><span class="tag ${categoryClass[category]}">${category}</span></td>
+            <td class="amount">${row.count}</td>
+            <td class="amount">${money(row.total)}</td>
+            <td class="amount">${percent}</td>
+          </tr>
+        `;
+      }).join("") + `
+        <tr>
+          <th>合计</th>
+          <th class="amount">${count}</th>
+          <th class="amount">${money(total)}</th>
+          <th class="amount">100.0%</th>
+        </tr>
+      `;
+    }
+
+    function getDailyAverage(list, total) {
+      const uniqueDays = new Set(list.map((item) => item.date).filter(Boolean));
+      return uniqueDays.size ? Math.round((total / uniqueDays.size) * 100) / 100 : 0;
+    }
+
+    function renderTable(list) {
+      emptyState.style.display = list.length ? "none" : "block";
+      expenseBody.innerHTML = list.map((item) => {
+        const categoryAmount = (category) => item.category === category ? money(item.amount) : "";
+        return `
+          <tr>
+            <td>${escapeHtml(item.date)}</td>
+            <td><span class="tag ${categoryClass[item.category] || "other"}">${escapeHtml(item.category)}</span></td>
+            <td class="amount">${money(item.amount)}</td>
+            <td class="amount">${categoryAmount("餐饮")}</td>
+            <td class="amount">${categoryAmount("住宿")}</td>
+            <td class="amount">${categoryAmount("加油")}</td>
+            <td class="amount">${categoryAmount("购物")}</td>
+            <td class="amount">${categoryAmount("门票")}</td>
+            <td class="amount">${categoryAmount("缆车")}</td>
+            <td class="amount">${categoryAmount("导游费")}</td>
+            <td class="amount">${categoryAmount("景区内车费")}</td>
+            <td class="amount">${categoryAmount("小费")}</td>
+            <td class="amount">${categoryAmount("过路费")}</td>
+            <td>${escapeHtml(item.reason)}</td>
+            <td>${escapeHtml(item.from)}</td>
+            <td>${escapeHtml(item.to)}</td>
+            <td class="amount">${numberText(item.mileage)}</td>
+            <td>${escapeHtml(item.payment)}</td>
+            <td>${escapeHtml(item.receipt)}</td>
+            <td>${escapeHtml(item.note)}</td>
+            <td>
+              <div class="row-actions">
+                <button class="icon-btn" type="button" data-action="edit" data-id="${item.id}">编辑</button>
+                <button class="icon-btn" type="button" data-action="delete" data-id="${item.id}">删除</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function render() {
+      const list = getFilteredExpenses();
+      renderSummary(list);
+      renderTable(list);
+    }
+
+    function readForm() {
+      return {
+        id: fields.editingId.value || uid(),
+        date: fields.date.value,
+        category: fields.category.value,
+        amount: Math.round(Number(fields.amount.value || 0) * 100) / 100, // 强制保留两位小数
+        payment: fields.payment.value,
+        reason: fields.reason.value.trim(),
+        from: fields.from.value.trim(),
+        to: fields.to.value.trim(),
+        mileage: Math.round(Number(fields.mileage.value || 0) * 10) / 10, // 里程保留一位小数
+        receipt: fields.receipt.value.trim(),
+        note: fields.note.value.trim(),
+        createdAt: fields.editingId.value
+          ? expenses.find((item) => item.id === fields.editingId.value)?.createdAt || new Date().toISOString()
+          : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+    }
+
+    function fillForm(item) {
+      fields.editingId.value = item.id;
+      fields.date.value = item.date || today();
+      fields.category.value = item.category || "餐饮";
+      fields.amount.value = item.amount ?? "";
+      fields.payment.value = item.payment || "微信";
+      fields.reason.value = item.reason || "";
+      fields.from.value = item.from || "";
+      fields.to.value = item.to || "";
+      fields.mileage.value = item.mileage || "";
+      fields.receipt.value = item.receipt || "";
+      fields.note.value = item.note || "";
+      formTitle.textContent = "编辑开支";
+      document.getElementById("saveBtn").textContent = "更新记录";
+      // 编辑过路费时更新占位符
+      if (item.category === "过路费") {
+        fields.reason.placeholder = "例如：高速通行费";
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function deleteExpense(id) {
+      const item = expenses.find((entry) => entry.id === id);
+      if (!item) return;
+      const ok = confirm(`确定删除这笔 ${item.date} 的 ${item.category} 记录吗？`);
+      if (!ok) return;
+      expenses = expenses.filter((entry) => entry.id !== id);
+      saveExpenses();
+      render();
+    }
+
+    function toCsvValue(value) {
+      return `"${String(value ?? "").replace(/"/g, '""')}"`;
+    }
+
+    function exportCsv() {
+      const headers = ["日期", "分类", "消费金额", "餐饮", "住宿", "加油", "购物", "门票", "缆车", "导游费", "景区内车费", "小费", "过路费", "开支事由", "从哪", "到哪", "大约里程数", "支付方式", "票据编号/订单号", "备注"];
+      const rows = getFilteredExpenses().map((item) => [
+        item.date,
+        item.category,
+        item.amount,
+        item.category === "餐饮" ? item.amount : "",
+        item.category === "住宿" ? item.amount : "",
+        item.category === "加油" ? item.amount : "",
+        item.category === "购物" ? item.amount : "",
+        item.category === "门票" ? item.amount : "",
+        item.category === "缆车" ? item.amount : "",
+        item.category === "导游费" ? item.amount : "",
+        item.category === "景区内车费" ? item.amount : "",
+        item.category === "小费" ? item.amount : "",
+        item.category === "过路费" ? item.amount : "",
+        item.reason,
+        item.from,
+        item.to,
+        item.mileage,
+        item.payment,
+        item.receipt,
+        item.note
+      ]);
+      const csv = [headers, ...rows].map((row) => row.map(toCsvValue).join(",")).join("\n");
+      downloadFile(`出游开支记账单_${today()}.csv`, "\ufeff" + csv, "text/csv;charset=utf-8");
+    }
+
+    function exportJson() {
+      downloadFile(`出游开支记账单备份_${today()}.json`, JSON.stringify(expenses, null, 2), "application/json");
+    }
+
+    function downloadFile(filename, content, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const item = readForm();
+      if (!item.date || !item.category || item.amount <= 0) {
+        alert("请填写日期、分类和大于 0 的消费金额。");
+        return;
+      }
+
+      if (item.category === "过路费" && (!item.from || !item.to)) {
+        const ok = confirm("这是一笔过路费，但起点或终点未填写。仍然保存吗？");
+        if (!ok) return;
+      }
+
+      const existingIndex = expenses.findIndex((entry) => entry.id === item.id);
+      if (existingIndex >= 0) {
+        expenses[existingIndex] = item;
+      } else {
+        expenses.push(item);
+      }
+      saveExpenses();
+      resetForm();
+      render();
+      // 提交成功提示
+      alert("记录保存成功！");
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", resetForm);
+    document.getElementById("exportCsvBtn").addEventListener("click", exportCsv);
+    document.getElementById("exportJsonBtn").addEventListener("click", exportJson);
+    document.getElementById("printBtn").addEventListener("click", () => window.print());
+    document.getElementById("importBtn").addEventListener("click", () => document.getElementById("importFile").click());
+
+    document.getElementById("clearBtn").addEventListener("click", () => {
+      if (!expenses.length) return;
+      const ok = confirm("确定清空全部记账记录吗？建议先备份 JSON。");
+      if (!ok) return;
+      expenses = [];
+      saveExpenses();
+      resetForm();
+      render();
+      alert("所有记录已清空！");
+    });
+
+    document.getElementById("importFile").addEventListener("change", async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      try {
+        const imported = JSON.parse(await file.text());
+        if (!Array.isArray(imported)) throw new Error("备份格式不正确");
+        // 兼容处理导入数据
+        expenses = imported.map((item) => ({
+          id: item.id || uid(),
+          date: item.date || today(),
+          category: categories.includes(item.category) ? item.category : "其他消费",
+          amount: Math.round(Number(item.amount || 0) * 100) / 100,
+          payment: item.payment || "其他",
+          reason: item.reason || "",
+          from: item.from || "",
+          to: item.to || "",
+          mileage: Math.round(Number(item.mileage || 0) * 10) / 10,
+          receipt: item.receipt || "",
+          note: item.note || "",
+          createdAt: item.createdAt || new Date().toISOString(),
+          updatedAt: item.updatedAt || new Date().toISOString()
+        }));
+        saveExpenses();
+        resetForm();
+        render();
+        alert(`成功导入 ${expenses.length} 条记录！`);
+      } catch (error) {
+        alert(`导入失败：${error.message}`);
+      } finally {
+        event.target.value = "";
+      }
+    });
+
+    expenseBody.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-action]");
+      if (!button) return;
+      const item = expenses.find((entry) => entry.id === button.dataset.id);
+      if (!item) return;
+      if (button.dataset.action === "edit") fillForm(item);
+      if (button.dataset.action === "delete") deleteExpense(item.id);
+    });
+
+    Object.values(filters).forEach((input) => {
+      input.addEventListener("input", render);
+      input.addEventListener("change", render);
+    });
+
+    fields.category.addEventListener("change", () => {
+      if (fields.category.value === "过路费") {
+        fields.reason.placeholder = "例如：高速通行费";
+      } else {
+        fields.reason.placeholder = "例如：午餐、高速通行、酒店入住、购买日用品";
+      }
+    });
+
+    // 初始化表单
+    resetForm();
+    render();
+  </script>
+</body>
+</html>
