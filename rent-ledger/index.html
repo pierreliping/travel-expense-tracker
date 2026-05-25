@@ -11,19 +11,25 @@
 <body>
   <div class="box" id="status">Loading rent ledger...</div>
   <script>
-    const parts = ["app.part00.txt", "app.part01.txt", "app.part02.txt", "app.part03.txt", "app.part04.txt", "app.part05.txt", "app.part06.txt", "app.part07.txt", "app.part08.txt", "app.part09.txt"];
     const statusEl = document.getElementById('status');
-    function fromBase64Utf8(value) {
+    function base64ToBytes(value) {
       const binary = atob(value);
       const bytes = new Uint8Array(binary.length);
       for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-      return new TextDecoder('utf-8').decode(bytes);
+      return bytes;
     }
-    Promise.all(parts.map(name => fetch(name, { cache: 'no-store' }).then(r => {
+    const parts = [
+      'bundle.part00.txt', 'bundle.part01.txt', 'bundle.part02.txt', 'bundle.part03.txt', 'bundle.part04.txt',
+      'bundle.part05.txt', 'bundle.part06.txt', 'bundle.part07.txt', 'bundle.part08.txt', 'bundle.part09.txt'
+    ];
+    Promise.all(parts.map(name => fetch(name, { cache: 'no-store' }).then(async r => {
       if (!r.ok) throw new Error(name + ' load failed: ' + r.status);
       return r.text();
-    }))).then(chunks => {
-      const html = fromBase64Utf8(chunks.join(''));
+    }))).then(async chunks => {
+      if (!('DecompressionStream' in window)) throw new Error('Please use a current Chrome, Edge, or Safari browser.');
+      const bytes = base64ToBytes(chunks.join('').replace(/\s+/g, ''));
+      const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+      const html = await new Response(stream).text();
       document.open();
       document.write(html);
       document.close();
