@@ -18,10 +18,7 @@
       for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
       return bytes;
     }
-    const parts = [
-      'bundle.part00.txt', 'bundle.part01.txt', 'bundle.part02.txt', 'bundle.part03.txt', 'bundle.part04.txt',
-      'bundle.part05.txt', 'bundle.part06.txt', 'bundle.part07.txt', 'bundle.part08.txt', 'bundle.part09.txt'
-    ];
+    const parts = ['bundle.part00.txt'];
     Promise.all(parts.map(name => fetch(name, { cache: 'no-store' }).then(async r => {
       if (!r.ok) throw new Error(name + ' load failed: ' + r.status);
       return r.text();
